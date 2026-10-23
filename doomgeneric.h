@@ -42,6 +42,16 @@ uint32_t DG_GetTicksMs();
 int DG_GetKey(int* pressed, unsigned char* key);
 void DG_SetWindowTitle(const char * title);
 
+// c4doom: an 8-bit frame and its palette (0x00RRGGBB), from dg-sum.c,
+// which also checksums a -timedemo's frames
+void DG_DrawFrame8(unsigned char *pixels, int *pal);
+void dg_frame(unsigned char *pixels);
+void dg_start(void);
+extern int dg_pal[256];
+// the platform's real clock; DG_GetTicksMs and DG_SleepMs are dg-sum.c's
+uint32_t plat_ms(void);
+void plat_sleep(uint32_t ms);
+
 #ifdef __cplusplus
 }
 #endif

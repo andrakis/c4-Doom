@@ -363,6 +363,21 @@ void R_DrawMaskedColumn (column_t* column)
 	if (dc_yl <= mceilingclip[dc_x])
 	    dc_yl = mceilingclip[dc_x]+1;
 
+#ifdef C4DOOM
+	// c4doom: only the post's own texels. Rounding can put the first row
+	// a fraction above the post or the last one past its end, and vanilla
+	// then drew the byte before it (index 127, wrapped) or after it --
+	// often the zone's next block header, whose pointers are addresses
+	// and differ on every machine. Those rows are dropped instead, so a
+	// -timedemo's frames are the same everywhere (dg-sum.c).
+	{
+	    fixed_t mid = basetexturemid - (column->topdelta<<FRACBITS);
+	    while (dc_yl <= dc_yh && mid + (dc_yl-centery)*dc_iscale < 0)
+		dc_yl++;
+	    while (dc_yl <= dc_yh && ((mid + (dc_yh-centery)*dc_iscale)>>FRACBITS) >= column->length)
+		dc_yh--;
+	}
+#endif
 	if (dc_yl <= dc_yh)
 	{
 	    dc_source = (byte *)column + 3;

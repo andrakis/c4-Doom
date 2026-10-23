@@ -116,7 +116,12 @@ static byte *AutoAllocMemory(int *size, int default_ram, int min_ram)
 
         *size = default_ram * 1024 * 1024;
 
+#ifdef C4DOOM
+        // c4doom: with slack past the end, zeroed below
+        zonemem = malloc(*size + 65536);
+#else
         zonemem = malloc(*size);
+#endif
 
         // Failed to allocate?  Reduce zone size until we reach a size
         // that is acceptable.
@@ -126,6 +131,15 @@ static byte *AutoAllocMemory(int *size, int default_ram, int min_ram)
             default_ram -= 1;
         }
     }
+
+#ifdef C4DOOM
+    // c4doom: zeroed, and 64 KB past its end. R_DrawColumn reads a
+    // sprite's column past its post, as vanilla did, into whatever lies
+    // next to it in the zone -- or past the zone's end, into the C heap.
+    // Zeroes there make that the same on every machine and every run, so
+    // a -timedemo's frames are too (dg-sum.c)
+    memset(zonemem, 0, *size + 65536);
+#endif
 
     return zonemem;
 }
@@ -403,7 +417,11 @@ void I_Error (char *error, ...)
         entry = entry->next;
     }
 
+#ifdef C4DOOM
+    exit_gui_popup = false;     // c4doom: no zenity; the message was printed
+#else
     exit_gui_popup = !M_ParmExists("-nogui");
+#endif
 
     // Pop up a GUI dialog box to show the error message, if the
     // game was not run from the console (and the user will

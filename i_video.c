@@ -320,6 +320,11 @@ void I_UpdateNoBlit (void)
 
 void I_FinishUpdate (void)
 {
+#ifdef C4DOOM
+    // c4doom: the 8-bit frame and its palette, as they are (dg-sum.c)
+    dg_frame((unsigned char *) I_VideoBuffer);
+}
+#else
     int y;
     int x_offset, y_offset, x_offset_end;
     unsigned char *line_in, *line_out;
@@ -368,6 +373,7 @@ void I_FinishUpdate (void)
 
 	DG_DrawFrame();
 }
+#endif
 
 //
 // I_ReadScreen
@@ -410,6 +416,10 @@ void I_SetPalette (byte* palette)
         colors[i].r = gammatable[usegamma][*palette++];
         colors[i].g = gammatable[usegamma][*palette++];
         colors[i].b = gammatable[usegamma][*palette++];
+#ifdef C4DOOM
+        // c4doom: and as 0x00RRGGBB, which GUI_BLIT8 takes
+        dg_pal[i] = (colors[i].r << 16) | (colors[i].g << 8) | colors[i].b;
+#endif
     }
 
 #ifdef CMAP256

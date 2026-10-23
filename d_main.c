@@ -1164,7 +1164,16 @@ void D_DoomMain (void)
 {
     int p;
     char file[256];
+#ifdef C4DOOM
+    // c4doom: static. G_TimeDemo and G_DeferedPlayDemo keep a pointer to
+    // it (defdemoname) and read it at the first tic -- and doomgeneric's
+    // D_DoomMain returns before then, where the original's never did, so
+    // its frame is gone and the name with it. The bare machine left the
+    // bytes where they were; C4IX's traps write over them.
+    static char demolumpname[9];
+#else
     char demolumpname[9];
+#endif
 #if ORIGCODE
     int numiwadlumps;
 #endif

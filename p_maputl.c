@@ -846,7 +846,14 @@ static void InterceptsOverrun(int num_intercepts, intercept_t *intercept)
 
     InterceptsMemoryOverrun(location, intercept->frac);
     InterceptsMemoryOverrun(location + 4, intercept->isaline);
+#ifdef C4DOOM
+    // c4doom: not the pointer itself, which is where this machine's
+    // malloc put the thing and differs on every one, but a number that
+    // does not, so a -timedemo plays the same everywhere (dg-sum.c)
+    InterceptsMemoryOverrun(location + 8, intercept->isaline ? (int) (intercept->d.line - lines) : 0);
+#else
     InterceptsMemoryOverrun(location + 8, (int) intercept->d.thing);
+#endif
 }
 
 
