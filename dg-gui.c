@@ -4,7 +4,9 @@
 //
 // Doom's 320x200 frames go out 8-bit, as GUI_BLIT8 with their palette
 // (dg-sum.c), and the host scales them to 640x480: 2x across and 2.4x
-// down, the 4:3 shape a VGA monitor gave them. Keys come from the
+// down, the 4:3 shape a VGA monitor gave them. On C4IX, with -window or
+// when a program that does not give way has the display, they go to the
+// Terminal window the game was started from instead (dg-c4ix.c). Keys come from the
 // display's event ring, as Doom's own key codes (doomkeys.h): Ctrl fires,
 // Space opens, Alt strafes and Shift runs, as the original's defaults
 // have it. Time is the machine's (TIME); a sleep is a USLP, which on C4IX
@@ -22,11 +24,16 @@
 
 int  dg_take(void);                     // the display is ours to use
 void dg_give(void);                     // and given back
+int  dg_win_open(void);                 // or a window (C4IX's; 0 elsewhere)
+void dg_win_draw(unsigned char *pixels, int *pal);
+int  dg_win_key(int *code, int *down);
+void dg_win_close(void);
 void dg_sound_init(void);               // dg-snd.c
 
 enum { W = 640, H = 480, RING = 65536, KQ = 64 };
 
 static int on;                          // the display is ours
+static int win;                         // or the game plays in a window
 static int *ring;
 static int kq[KQ];                      // keys waiting: (pressed << 8) | Doom's code
 static int kh, kt;
@@ -39,10 +46,23 @@ static void dg_close(void) {
     on = 0;
 }
 
+static void dg_unwin(void) { dg_win_close(); }
+
+static int dg_window(void) {
+    if (!(win = dg_win_open())) return 0;
+    atexit(dg_unwin);
+    return 1;
+}
+
 void DG_Init() {
     if (M_CheckParm("-timedemo")) return;
+    if ((M_CheckParm("-window") || M_CheckParm("--window")) && dg_window()) return;
     if (!gui_present()) { printf("doom: this machine has no display\n"); return; }
-    if (!dg_take()) { printf("doom: a program has the display\n"); return; }
+    if (!dg_take()) {
+        if (dg_window()) { printf("doom: a program has the display; playing in the window\n"); return; }
+        printf("doom: a program has the display\n");
+        return;
+    }
     if (!(ring = (int *)malloc(RING)) || !gui_attach(ring, RING, W, H)) { dg_give(); return; }
     gui_events(GUI_M_KEYS | GUI_M_WINDOW);
     gui_cursor(GUI_PTR_NONE);
@@ -55,6 +75,7 @@ void DG_Init() {
 void DG_DrawFrame() {}
 
 void DG_DrawFrame8(unsigned char *pixels, int *pal) {
+    if (win) { dg_win_draw(pixels, pal); return; }
     if (!on) return;
     gui_blit8(0, 0, 320, 200, (char *)pixels, 320, pal, W, H);
     gui_show();
@@ -102,13 +123,22 @@ static int dkey(int code) {
     return 0;
 }
 
+static void dg_queue(int code, int down) {
+    int k;
+    if (!(k = dkey(code)) || (kt + 1) % KQ == kh) return;
+    kq[kt] = (down ? 256 : 0) | k;
+    kt = (kt + 1) % KQ;
+}
+
 int DG_GetKey(int *pressed, unsigned char *key) {
-    int ev[4], k;
+    int ev[4], k, code, down;
+    // the window closed: the game ends, as it does when it is quit
+    while (win && (k = dg_win_key(&code, &down)) != 0) {
+        if (k < 0) exit(0);
+        dg_queue(code, down);
+    }
     while (on && gui_poll(ev)) {
-        if (ev[0] != GUI_EV_KEYDOWN && ev[0] != GUI_EV_KEYUP) continue;
-        if (!(k = dkey(ev[1])) || (kt + 1) % KQ == kh) continue;
-        kq[kt] = (ev[0] == GUI_EV_KEYDOWN ? 256 : 0) | k;
-        kt = (kt + 1) % KQ;
+        if (ev[0] == GUI_EV_KEYDOWN || ev[0] == GUI_EV_KEYUP) dg_queue(ev[1], ev[0] == GUI_EV_KEYDOWN);
     }
     if (kh == kt) return 0;
     *pressed = kq[kh] >> 8;

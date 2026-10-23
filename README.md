@@ -14,6 +14,7 @@ how Wolfenstein 3D, the port before it, was done; this one follows it.
 | where | how | platform |
 |---|---|---|
 | C4IX, the whole display | `doom`, or Go > Doom; the desktop gives way until it ends (`include/display.h`) | `dg-gui.c`, `dg-c4ix.c` |
+| C4IX, a window | `doom -window` in a Terminal, whose window it plays in; also when a program that does not give way has the display. Several at once, each with `pin` on a CPU of its own (docs/c4ix-smp.md) | `dg-gui.c`, `dg-c4ix.c` |
 | C4DOS | `DOOM` at the `A>` prompt; the page's `?system=c4dos` | `dg-gui.c`, `dg-bare.c` |
 | the bare machine | `doom.c4r` as the machine's image; the page's `?system=doom` | `dg-gui.c`, `dg-bare.c` |
 
