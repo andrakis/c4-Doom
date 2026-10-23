@@ -18,7 +18,9 @@ how Wolfenstein 3D, the port before it, was done; this one follows it.
 | C4DOS | `DOOM` at the `A>` prompt; the page's `?system=c4dos` | `dg-gui.c`, `dg-bare.c` |
 | the bare machine | `doom.c4r` as the machine's image; the page's `?system=doom` | `dg-gui.c`, `dg-bare.c` |
 
-On C4IX the game and its WAD are in `/usr/games/doom`, where it starts,
+On C4IX the game asks for a nice of -5 (docs/c4ix-design.md 4.4): served
+sooner and longer than the programs beside it, but not to their
+exclusion. The game and its WAD are in `/usr/games/doom`, where it starts,
 and where its config and saved games go too. There the WAD is a RAM file,
 which seeks; the same name looked up from elsewhere can be the host's
 file, which does not. On the bare machine and under C4DOS the

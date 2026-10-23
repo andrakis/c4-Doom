@@ -15,7 +15,11 @@
 #include "display.h"
 #include "window.h"
 
-int dg_take(void) { return udisplay_take(0); }
+// a game asks to be served sooner and longer than the rest (nice, sched.c)
+int unice(int id, int nice);            // libc4ix (c4ix_user.h)
+enum { DG_NICE = -5 };
+
+int dg_take(void) { unice(0, DG_NICE); return udisplay_take(0); }
 void dg_give(void) { udisplay_give(); }
 
 static char *fbuf[2];
@@ -24,6 +28,7 @@ static int sent, waiting, pending, closed;
 
 int dg_win_open(void) {
     int i;
+    unice(0, DG_NICE);
     for (i = 0; i < 2; i++) {
         fbuf[i] = (char *)calloc(320 * 200, 1);
         fpal[i] = (int *)calloc(256, sizeof(int));
