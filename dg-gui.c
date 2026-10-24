@@ -11,7 +11,8 @@
 // Space opens, Alt strafes and Shift runs, as the original's defaults
 // have it. Time is the machine's (TIME); a sleep is a USLP, which on C4IX
 // is a sleep of this task alone. A -timedemo runs without the display:
-// its frames are checksummed, not shown.
+// its frames are checksummed, not shown -- unless -show is given too,
+// so that the time it takes counts the drawing.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +56,7 @@ static int dg_window(void) {
 }
 
 void DG_Init() {
-    if (M_CheckParm("-timedemo")) return;
+    if (M_CheckParm("-timedemo") && !M_CheckParm("-show") && !M_CheckParm("--show")) return;
     if ((M_CheckParm("-window") || M_CheckParm("--window")) && dg_window()) return;
     if (!gui_present()) { printf("doom: this machine has no display\n"); return; }
     if (!dg_take()) {

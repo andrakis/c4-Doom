@@ -117,3 +117,15 @@ the desktop and top behind it. Doom on the original hardware ran at up to
   wipe between levels runs by the clock, though, so while timing the clock
   is virtual (`dg-sum.c`). `-nosound` because the gcc build has none, so
   both run the same code.
+
+  To compare how fast the game runs between machines, add `-show`: the
+  frames go to the display (or to the window, with `-window`) as well, so the
+  time counts the drawing. Every timedemo prints a speed line before its
+  checksum, by the machine's real clock from the first frame:
+
+  ```
+  speed: demo3: 2173 frames in 14.205 s, 152.9 fps
+  ```
+
+  In the page that clock is the wall's. Under `cli.js`, unpaced, it is
+  cycles over the MHz asked for, so there time the run from outside.
