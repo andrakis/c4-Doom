@@ -1,4 +1,4 @@
-# src/doom/data — Doom's shareware WAD
+# data — Doom's shareware WAD
 
 `doom1.wad` is id Software's shareware Doom v1.9 data, unmodified:
 4,196,020 bytes, MD5 `f0cefca49926d00903cf57551d901abe`. It came from

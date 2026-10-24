@@ -1,0 +1,4 @@
+# Doom (games/doom): the game and id's shareware WAD
+doom/:
+	doom.c4r: c4ix-doom.c4r
+	doom1.wad

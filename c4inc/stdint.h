@@ -1,5 +1,5 @@
 // stdint.h -- the fixed-width types, for c4lc on a 32-bit C4IX (C4IX's
-// libc has none yet; Wolf3D carries the same, src/wolf3d/c4inc)
+// libc has none yet; Wolf3D carries the same, games/wolf3d/c4inc)
 #ifndef C4DOOM_STDINT_H
 #define C4DOOM_STDINT_H 1
 typedef signed char        int8_t;

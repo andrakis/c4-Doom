@@ -1,4 +1,4 @@
-# src/doom — Doom on C4IX, C4DOS and the bare machine
+# games/doom — Doom on C4IX, C4DOS and the bare machine
 
 id Software's Doom (1993), as doomgeneric has it, compiled by c4lc and
 played on libjs's whole display, with its sound effects and its music on
