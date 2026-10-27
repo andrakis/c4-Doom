@@ -63,7 +63,7 @@ test-doom: doom-data doom-host c4bb-images test-libc-bare
 	   2>/dev/null > .doom_t/c4ix.out
 	@for w in bare dos c4ix; do grep '^timedemo' .doom_t/$$w.out | cmp -s .doom_t/host.txt - \
 	   || { echo "test-doom: $$w's frames differ:"; tail -5 .doom_t/$$w.out; exit 1; }; done
-	@grep -A1 '^timedemo' .doom_t/dos.out | grep -q '^A>C4DOS version' \
+	@grep -A1 '^timedemo' .doom_t/dos.out | grep -Eq '^A(:\\)?>C4DOS version' \
 	   || { echo "test-doom: C4DOS did not come back to its prompt:"; tail -5 .doom_t/dos.out; exit 1; }
 	@rm -rf .doom_t
 	@echo "test-doom: OK"
