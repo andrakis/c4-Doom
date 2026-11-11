@@ -167,6 +167,13 @@ byte *I_ZoneBase (int *size)
     {
         default_ram = DEFAULT_RAM;
         min_ram = MIN_RAM;
+#ifdef C4DOOM
+        // c4: the person's own IWAD (-home, d_iwad.c) has Doom II's and
+        // Final Doom's big maps, which outgrow the shareware's 6 MiB, so
+        // 16, as Chocolate Doom has it; the shareware stays as it was
+        if (M_CheckParm("-home"))
+            default_ram = 16;
+#endif
     }
 
     zonemem = AutoAllocMemory(size, default_ram, min_ram);

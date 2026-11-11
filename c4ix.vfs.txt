@@ -1,5 +1,12 @@
-# Doom (games/doom): the game and id's shareware WAD
+# Doom (games/doom): the game and id's shareware WAD; and the person's
+# own IWAD (doom.wad, doom2.wad, plutonia.wad, tnt.wad), which the page's
+# Uploads put in /home/doom or /home (doom -home), one entry each: a
+# missing one says so, and names those that are there
 #@app Games|Doom|doom
+#@app Games/Doom (your files)|The Ultimate Doom|doom -home -iwad doom.wad
+#@app Games/Doom (your files)|Doom II|doom -home -iwad doom2.wad
+#@app Games/Doom (your files)|Final Doom: TNT Evilution|doom -home -iwad tnt.wad
+#@app Games/Doom (your files)|Final Doom: The Plutonia Experiment|doom -home -iwad plutonia.wad
 doom/:
 	doom.c4r: c4ix-doom.c4r
 	doom1.wad

@@ -41,6 +41,46 @@ Size menu; keys reach the game only while its window has the focus; and
 closing the window ends the game, as quitting it would. Without grin -- at
 `A>`, full screen from grin, or on the bare machine -- nothing changes.
 
+## Your own IWAD: `doom -home`
+
+`doom -home` plays the person's own IWAD rather than the shareware:
+`doom.wad` (Doom, registered or The Ultimate Doom), `doom2.wad`, and
+Final Doom's `plutonia.wad` and `tnt.wad` (`doomu.wad` and Freedoom's
+`freedoom1.wad`/`freedoom2.wad` too). Add it with the page's **Uploads**
+(c4's libjs/README.md), in the folder `/home/doom` (one in `/home` itself
+plays too), then start it. `-iwad NAME` picks one of several:
+
+| | C4IX | the page, bare machine |
+|---|---|---|
+| the first found | `doom -home` | `?system=doom-full` |
+| The Ultimate Doom | Go > Games > Doom (your files) > The Ultimate Doom, or `doom -home -iwad doom.wad` | `?system=doom1-full` |
+| Doom II | ... > Doom II, or `-iwad doom2.wad` | `?system=doom2-full` |
+| Final Doom: TNT | ... > Final Doom: TNT Evilution, or `-iwad tnt.wad` | `?system=tnt-full` |
+| Final Doom: Plutonia | ... > Final Doom: The Plutonia Experiment, or `-iwad plutonia.wad` | `?system=plutonia-full` |
+
+`D_FindIWAD` (`d_iwad.c`) looks in Doom's folder first, then in `/home`,
+for the name `-iwad` gives (as given, in lower case or in upper case);
+without one it takes the first of those names it finds, in that order --
+Doom II before Doom, as Chocolate Doom prefers -- and names the others
+it finds on the terminal. A name that is not there says so, and names
+those that are.
+
+| | its folder | then |
+|---|---|---|
+| C4IX (it has a `/home`) | `/home/doom/` | `/home/` |
+| the bare machine, C4DOS | `doom/` at drive 0's root (`A:\DOOM`) | drive 0's root |
+
+On C4IX those are RAM files of the host's, which seek, read a part at a
+time; on the bare machine the IWAD is read whole into memory when it
+opens, so `doom-full` has 128 MB. With `-home` the zone is 16 MiB
+(`i_system.c`), as Chocolate Doom's is, for Doom II's and Final Doom's
+bigger maps; the shareware keeps its 6. Without a file, `doom -home` says
+what it wants and stops. The game's config is where it runs, shared
+with the shareware's; its saved games are in `.savegame/IWAD/` there,
+one folder for each IWAD (`m_config.c`), as Chocolate Doom keeps them,
+since a save of one is not a save of another's maps. Dehacked patches and Chex Quest's `.deh` are not in this
+build, so `chex.wad` and `hacx.wad` are not offered.
+
 ## Where it comes from
 
 - **The game:** [doomgeneric](https://github.com/ozkl/doomgeneric) by

@@ -20,6 +20,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#ifdef C4DOOM
+#include <sys/stat.h>
+#endif
 
 #include "config.h"
 #include "deh_str.h"
@@ -699,12 +702,112 @@ char *D_TryFindWADByName(char *filename)
 // should be executed (notably loading PWADs).
 //
 
+#ifdef C4DOOM
+// c4: an IWAD in one of -home's folders, by its name as given, in lower
+// case or in upper case (the Uploads keep names in lower case, a disk may
+// not): its path, or NULL
+static char *c4_home_iwad(char *dir, char *name)
+{
+    char lower[64], upper[64];
+    char *tries[3];
+    char *path;
+    int i;
+    for (i = 0; name[i] && i < 63; i++)
+    {
+        lower[i] = tolower(name[i]);
+        upper[i] = toupper(name[i]);
+    }
+    lower[i] = 0;
+    upper[i] = 0;
+    tries[0] = name;
+    tries[1] = lower;
+    tries[2] = upper;
+    for (i = 0; i < 3; i++)
+    {
+        path = M_StringJoin(dir, tries[i], NULL);
+        if (M_FileExists(path))
+            return path;
+        free(path);
+    }
+    return NULL;
+}
+
+static char *c4_base(char *path)
+{
+    char *p = strrchr(path, '/');
+    return p ? p + 1 : path;
+}
+#endif
+
 char *D_FindIWAD(int mask, GameMission_t *mission)
 {
     char *result;
     char *iwadfile;
     int iwadparm;
     int i;
+
+#ifdef C4DOOM
+    // c4: -home plays the person's own IWAD, which the page's Uploads put
+    // in Doom's folder or in /home: on C4IX /home/doom and /home; on the
+    // bare machine and under C4DOS, which have no /home, doom/ at the
+    // disk's root and the root. (Not "/home/..." there: the host finds a
+    // path it does not have by its last part, at the root.) -iwad NAME
+    // picks one there; without it, the folder first, then each name in the
+    // order Doom itself prefers, and the others it finds are named.
+    if (M_CheckParm("-home"))
+    {
+        static char *c4ix[] = { "/home/doom/", "/home/", 0 };
+        static char *disk[] = { "doom/", "", 0 };
+        static char *names[] = { "doom2.wad", "plutonia.wad", "tnt.wad", "doom.wad",
+                                 "doomu.wad", "freedoom2.wad", "freedoom1.wad", 0 };
+        struct stat st;
+        char **dirs, **d, **n;
+        char *other;
+        int others;
+        dirs = stat("/home", &st) == 0 ? c4ix : disk;
+        result = NULL;
+        iwadparm = M_CheckParmWithArgs("-iwad", 1);
+        if (iwadparm)
+        {
+            for (d = dirs; *d && !result; d++)
+                result = c4_home_iwad(*d, myargv[iwadparm + 1]);
+        }
+        else
+        {
+            for (d = dirs; *d && !result; d++)
+                for (n = names; *n && !result; n++)
+                    result = c4_home_iwad(*d, *n);
+        }
+        if (result)
+        {
+            // doomu.wad is no name the list knows: D_IdentifyVersion
+            // tells it by its maps
+            *mission = IdentifyIWADByName(result, mask);
+            printf("doom: playing %s\n", result);
+        }
+        // the others there, and how to play one
+        others = 0;
+        for (n = names; *n; n++)
+        {
+            for (d = dirs, other = NULL; *d && !other; d++)
+                other = c4_home_iwad(*d, *n);
+            if (other && (!result || strcasecmp(c4_base(other), c4_base(result))))
+            {
+                printf("%s%s", others++ ? " " : "doom: also here: ", other);
+            }
+            free(other);
+        }
+        if (others)
+            printf("\n      doom -home -iwad NAME plays another\n");
+        if (result)
+            return result;
+        if (iwadparm)
+            I_Error("doom -home -iwad %s: there is no %s in %s or %s.",
+                    myargv[iwadparm + 1], myargv[iwadparm + 1], dirs[0], dirs[1][0] ? dirs[1] : "the disk's root");
+        I_Error("doom -home plays your own DOOM.WAD, DOOM2.WAD, PLUTONIA.WAD or TNT.WAD:\n"
+                "add it with the page's Uploads (in /home/doom or /home), then start it again.");
+    }
+#endif
 
     // Check for the -iwad parameter
 
