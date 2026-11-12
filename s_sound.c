@@ -598,6 +598,9 @@ void S_StartMusic(int m_id)
     S_ChangeMusic(m_id, false);
 }
 
+// c4: set by dg-snd.c when the music is General MIDI (never, on the host)
+int dg_music_gm;
+
 void S_ChangeMusic(int musicnum, int looping)
 {
     musicinfo_t *music = NULL;
@@ -607,7 +610,9 @@ void S_ChangeMusic(int musicnum, int looping)
     // The Doom IWAD file has two versions of the intro music: d_intro
     // and d_introa.  The latter is used for OPL playback.
 
-    if (musicnum == mus_intro && (snd_musicdevice == SNDDEVICE_ADLIB
+    // (c4: dg-snd.c says which the music is played on, whatever the
+    // config file's device)
+    if (musicnum == mus_intro && !dg_music_gm && (snd_musicdevice == SNDDEVICE_ADLIB
                                || snd_musicdevice == SNDDEVICE_SB))
     {
         musicnum = mus_introa;
