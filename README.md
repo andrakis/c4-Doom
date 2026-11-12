@@ -90,7 +90,23 @@ build, so `chex.wad` and `hacx.wad` are not offered.
   their headers are here; its platforms (SDL, X11 and the rest) are not.
 - **The music player:** Chocolate Doom's `i_oplmusic.c` by Simon Howard
   (GPL v2), as Raptor's `i_oplmusic.cpp` carries it, made C again in
-  `dg-snd.c`.
+  `dg-snd.c`. Its General MIDI follows Chocolate Doom's `mus2mid.c`.
+
+## Music: the AdLib, or General MIDI
+
+The music is on the card's OPL by default, as DOSBox set to AdLib plays
+it: the GENMIDI lump's FM instruments, D_INTROA for the title. When the
+card has a General MIDI synth on its MIDI port (the page's Configuration,
+Music: General MIDI, with a SoundFont from the Uploads or the computer's
+own synth; c4's `libjs/README.md`), `dg-snd.c` plays the score there
+instead, as Doom played it on a Sound Canvas, and the title is D_INTRO.
+The MUS reader is the same either way, and so is its timing: each event
+goes to the OPL player or becomes a MIDI message, stamped with the
+card's stream. MUS to MIDI is `mus2mid.c`'s: channel 15 is percussion
+(MIDI's 10th), 9-14 move up one, the controllers and system events are
+MIDI's, and Doom's music volume scales each channel's volume by
+sqrt(volume / 120), as Chocolate's Windows MIDI player does. `-opl`
+keeps the AdLib whatever the card has.
 - **The data:** `data/doom1.wad` is id's shareware v1.9 WAD, 4,196,020
   bytes, MD5 `f0cefca49926d00903cf57551d901abe`, unmodified. It came from
   Debian's `doom-wad-shareware` 1.9.fixed-5 package. `data/README.md`
@@ -103,7 +119,7 @@ build, so `chex.wad` and `hacx.wad` are not offered.
 | doomgeneric's units and headers | the game, with the changes below |
 | `dg-sum.c` | what every platform shares: each frame to the platform, 8-bit with its palette; a `-timedemo`'s frames checksummed, on a virtual clock |
 | `dg-gui.c` | the platform on libjs's display: `GUI_BLIT8` scaled by the host to 640x480, keys as Doom's key codes, the machine's clock |
-| `dg-snd.c` | the sound card: effects on its eight sample channels, and music, MUS played by Chocolate Doom's OPL player on its OPL |
+| `dg-snd.c` | the sound card: effects on its eight sample channels, and music, MUS played by Chocolate Doom's OPL player on its OPL, or as General MIDI on its MIDI port |
 | `dg-c4ix.c`, `dg-bare.c` | whether the display has to be asked for: on C4IX the desktop has it, under grin grin does; and the window instead (C4IX's, or grin's) |
 | `dg-host.c` | the platform on a host, built with gcc: no display and no sound, the reference for `make test-doom` |
 | `c4inc/` | `stdint.h`, `stdbool.h` and `inttypes.h`, which C4IX's libc lacks |

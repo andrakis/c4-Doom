@@ -49,7 +49,9 @@ PHONY += doom-data
 # machine, under C4DOS and inside C4IX -- must show the same 2173 frames.
 # The second and third together, as they share nothing. demo1 and demo2
 # match too (games/doom/README.md); demo3 is the shortest. About five
-# minutes, nearly all of it on c4m.
+# minutes, nearly all of it on c4m. And on the bare machine once more,
+# with its music on a sound card with a General MIDI synth (cli.js --midi):
+# the same frames, and the music as MIDI, drums and all (midi-notes.mjs).
 test-doom: doom-data doom-host c4bb-images test-libc-bare
 	@rm -rf .doom_t && mkdir -p .doom_t
 	@cd .doom_t && cp ../games/doom/data/doom1.wad . && ../doom-host -iwad doom1.wad -timedemo demo3 -nosound 2>/dev/null \
@@ -59,10 +61,16 @@ test-doom: doom-data doom-host c4bb-images test-libc-bare
 	     > ../../../../.doom_t/bare.out 2>/dev/null & \
 	   printf 'doom -timedemo demo3 -nosound\nver\n' | timeout 1500 node ../../../../libjs/cli.js -m 64 -d . ../c4dos32.c4r \
 	     > ../../../../.doom_t/dos.out 2>/dev/null; wait; }
-	@printf 'doom -timedemo demo3 -nosound\nexit\n' | timeout 1500 node libjs/cli.js -m 64 -d src/c4bb/images/disk src/c4bb/images/c4ix32.c4r \
-	   2>/dev/null > .doom_t/c4ix.out
+	@{ cd src/c4bb/images/games && timeout 1500 node ../../../../libjs/cli.js -m 64 -d . --midi ../../../../.doom_t/gm.txt doom.c4r \
+	     -timedemo demo3 -nosfx > ../../../../.doom_t/gm.out 2>/dev/null; } & \
+	 printf 'doom -timedemo demo3 -nosound\nexit\n' | timeout 1500 node libjs/cli.js -m 64 -d src/c4bb/images/disk src/c4bb/images/c4ix32.c4r \
+	   2>/dev/null > .doom_t/c4ix.out; wait
 	@for w in bare dos c4ix; do grep '^timedemo' .doom_t/$$w.out | cmp -s .doom_t/host.txt - \
 	   || { echo "test-doom: $$w's frames differ:"; tail -5 .doom_t/$$w.out; exit 1; }; done
+	@grep '^timedemo' .doom_t/gm.out | cmp -s .doom_t/host.txt - \
+	   || { echo "test-doom: with General MIDI music, the frames differ:"; tail -5 .doom_t/gm.out; exit 1; }
+	@m=$$(node libjs/tests/src/midi-notes.mjs .doom_t/gm.txt 200 4) && echo "test-doom: General MIDI: $$m" \
+	   || { echo "test-doom: the General MIDI music did not play: $$m"; exit 1; }
 	@grep -A1 '^timedemo' .doom_t/dos.out | grep -Eq '^A(:\\)?>C4DOS version' \
 	   || { echo "test-doom: C4DOS did not come back to its prompt:"; tail -5 .doom_t/dos.out; exit 1; }
 	@rm -rf .doom_t

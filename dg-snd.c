@@ -1,7 +1,9 @@
 // dg-snd.c -- Doom's sound effects on libjs's sound card (libjs/guest/snd.h):
 // its eight channels of 8-bit samples are Doom's eight, and a DMX lump's
 // samples play as they are, at their own rate, copied when they start. The
-// music is dg-mus.c's, on the card's OPL.
+// music is the MUS reader's, below: on the card's OPL as DMX played it, or,
+// when the card has a General MIDI synth on its MIDI port (the person chose
+// General MIDI), as MIDI there, as Doom played it on a Sound Canvas.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +11,7 @@
 #include "doomtype.h"
 #include "deh_str.h"
 #include "i_sound.h"
+#include "m_argv.h"
 #include "m_misc.h"
 #include "w_wad.h"
 #include "z_zone.h"
@@ -1426,6 +1429,75 @@ static void I_SetOPLDriverVer(opl_driver_ver_t ver)
 }
 
 
+// ---- General MIDI: the score as MIDI on the card's MIDI port ---------------
+//
+// What Chocolate Doom's mus2mid.c (Ben Ryves, Simon Howard, GPL v2) makes
+// of a MUS score, sent as it plays instead of written to a file: MUS
+// channel 15 is MIDI's percussion channel 9, and channels 9-14 move up one
+// to make room; MUS's controllers and system events are MIDI's; the pitch
+// wheel's byte is the top eight of MIDI's fourteen bits. Doom's music
+// volume scales each channel's own, as Chocolate's Windows MIDI player
+// (i_winmusic.c) does, from MIDI's 100 at the start of every song: by the
+// square root of volume / 120, since a synth's channel volume is already
+// a curve (gm_factor, in 1024ths, sums in integers).
+
+extern int dg_music_gm;                 // s_sound.c's: D_INTRO rather than D_INTROA
+
+enum { GM_CHANNELS = 16, GM_DEFAULT_VOLUME = 100 };
+static int gm_volume[GM_CHANNELS];      // each channel's own, as the score set it
+
+// MUS controller 1-9, and system event 10-14, as MIDI controllers
+static const byte gm_controller[15] = { 0, 0, 1, 7, 10, 11, 91, 93, 64, 67, 120, 123, 126, 127, 121 };
+
+static byte gm_on[6] = { 0xf0, 0x7e, 0x7f, 0x09, 0x01, 0xf7 };   // General MIDI System On
+
+static int gm_channel(int ch) { return ch == 15 ? 9 : ch >= 9 ? ch + 1 : ch; }
+
+static int gm_factor;                   // sqrt(music_volume / 120), in 1024ths
+
+static void gm_set_factor(void) {
+    int n = music_volume * 1048576 / 120, r = 0, b;
+    for (b = 1 << 11; b; b >>= 1)        // the square root, bit by bit
+        if ((r + b) * (r + b) <= n) r += b;
+    gm_factor = r;
+}
+
+static void gm_send_volume(int c) {
+    int v = (gm_volume[c] * gm_factor + 512) >> 10;
+    snd_midi(0xb0 | c, 7, v > 127 ? 127 : v);
+}
+
+// every note stopped; with reset, every channel as a song starts
+static void gm_silence(int reset) {
+    int c;
+    for (c = 0; c < GM_CHANNELS; c++) {
+        snd_midi(0xb0 | c, 120, 0);     // all sound off
+        snd_midi(0xb0 | c, 123, 0);     // all notes off
+        if (!reset) continue;
+        snd_midi(0xb0 | c, 121, 0);     // controllers reset
+        snd_midi(0xe0 | c, 0, 64);      // the pitch wheel centred
+        snd_midi(0xc0 | c, 0, 0);
+        gm_volume[c] = GM_DEFAULT_VOLUME;
+        gm_send_volume(c);
+    }
+}
+
+static void gm_event(int type, int ch, int a, int b) {
+    int c = gm_channel(ch), k;
+    switch (type) {
+    case 0: snd_midi(0x80 | c, a, 0); break;
+    case 1: snd_midi(0x90 | c, a, b); break;
+    case 2: k = a * 64; snd_midi(0xe0 | c, k & 127, k >> 7); break;
+    case 3: if (a >= 10 && a <= 14) snd_midi(0xb0 | c, gm_controller[a], 0); break;
+    case 4:
+        if (b > 127) b = 127;
+        if (a == 0) snd_midi(0xc0 | c, b, 0);
+        else if (a == 3) { gm_volume[c] = b; gm_send_volume(c); }
+        else if (a >= 1 && a <= 9) snd_midi(0xb0 | c, gm_controller[a], b);
+        break;
+    }
+}
+
 // ---- MUS, Doom's score format, read as the card's stream wants it -----------
 //
 // A MUS lump: "MUS\x1a", the score's length and start, then events. Each
@@ -1433,6 +1505,7 @@ static void I_SetOPLDriverVer(opl_driver_ver_t ver)
 // percussion) -- and its arguments; after the last of a group, a delay in
 // ticks of 1/140 s, seven bits a byte. Poll plays groups until the card's
 // stream is a quarter of a second ahead (snd_clock(140): snd_wait in ticks).
+// Each event goes to the OPL player above, or, for General MIDI, gm_event.
 
 enum { MUS_RATE = 140, MUS_AHEAD_US = 250000, MUS_MAXSTEPS = 4096 };
 
@@ -1462,6 +1535,7 @@ static void mus_channels(void) {
 }
 
 static void mus_silence(void) {
+    if (dg_music_gm) { gm_silence(0); return; }
     while (voice_alloced_num > 0) ReleaseVoice(0);
 }
 
@@ -1472,7 +1546,19 @@ static int mus_step(void) {
         if ((ev = mus_byte()) < 0) return -1;
         type = (ev >> 4) & 7;
         ch = ev & 15;
-        if (type == 0) {
+        if (dg_music_gm) {
+            b = v = 0;
+            if (type == 0 || type == 2 || type == 3) b = mus_byte();
+            else if (type == 1) {
+                b = mus_byte();
+                if (b & 0x80) mus_vel[ch] = mus_byte() & 127;
+                b &= 127;
+                v = mus_vel[ch];
+            } else if (type == 4) { b = mus_byte(); v = mus_byte(); }
+            else if (type == 6 || type == 7) return -1;
+            if (b < 0 || v < 0) return -1;
+            gm_event(type, ch, type == 0 ? b & 127 : b, v);
+        } else if (type == 0) {
             KeyOffEvent(ch, mus_byte() & 127);
         } else if (type == 1) {
             b = mus_byte();
@@ -1504,7 +1590,19 @@ static snddevice_t music_devices[] = { SNDDEVICE_ADLIB, SNDDEVICE_SB };
 
 static boolean Mus_Init(void) {
     byte *genmidi;
-    if (!snd_present() || !(snd_caps() & SND_HAS_OPL)) return false;
+    int i;
+    if (!snd_present()) return false;
+    // -opl: the AdLib, though the card has a General MIDI synth
+    dg_music_gm = (snd_caps() & SND_HAS_MIDI) && !M_CheckParm("-opl");
+    if (dg_music_gm) {
+        snd_clock(MUS_RATE);
+        snd_midi_bytes((char *) gm_on, sizeof gm_on);
+        for (i = 0; i < MIDI_CHANNELS_PER_TRACK; i++) mus_vel[i] = 127;
+        gm_set_factor();
+        gm_silence(1);
+        return true;
+    }
+    if (!(snd_caps() & SND_HAS_OPL)) return false;
     genmidi = W_CacheLumpName("GENMIDI", PU_STATIC);
     if (memcmp(genmidi, GENMIDI_HEADER, strlen(GENMIDI_HEADER)) != 0) return false;
     LoadInstrumentTable((char *) genmidi);
@@ -1518,16 +1616,20 @@ static boolean Mus_Init(void) {
 static void Mus_Shutdown(void) {
     mus_silence();
     mus_playing = 0;
-    I_OPL_ShutdownMusic();
+    if (!dg_music_gm) I_OPL_ShutdownMusic();
 }
 
 static void Mus_SetMusicVolume(int volume) {
     int i;
     music_volume = volume < 0 ? 0 : volume > 127 ? 127 : volume;
+    if (dg_music_gm) { gm_set_factor(); for (i = 0; i < GM_CHANNELS; i++) gm_send_volume(i); return; }
     for (i = 0; i < MIDI_CHANNELS_PER_TRACK; i++) SetChannelVolume(&channels[i], channels[i].volume);
 }
 
-static void Mus_PauseMusic(void) { mus_paused = 1; I_OPL_PauseSong(); }
+static void Mus_PauseMusic(void) {
+    mus_paused = 1;
+    if (dg_music_gm) gm_silence(0); else I_OPL_PauseSong();
+}
 static void Mus_ResumeMusic(void) { mus_paused = 0; }
 
 static void *Mus_RegisterSong(void *data, int len) {
@@ -1550,6 +1652,7 @@ static void Mus_UnRegisterSong(void *handle) {
 }
 
 static void Mus_PlaySong(void *handle, boolean looping) {
+    int i;
     mus_silence();
     mus_song = handle;
     if (!mus_song) return;
@@ -1557,7 +1660,10 @@ static void Mus_PlaySong(void *handle, boolean looping) {
     mus_looping = looping;
     mus_paused = 0;
     mus_playing = 1;
-    mus_channels();
+    if (dg_music_gm) {
+        for (i = 0; i < MIDI_CHANNELS_PER_TRACK; i++) mus_vel[i] = 127;
+        gm_silence(1);
+    } else mus_channels();
 }
 
 static void Mus_StopSong(void) {
