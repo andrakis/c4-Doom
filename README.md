@@ -13,9 +13,9 @@ how Wolfenstein 3D, the port before it, was done; this one follows it.
 
 | where | how | platform |
 |---|---|---|
-| C4IX, the whole display | `doom`, or Go > Doom; the desktop gives way until it ends (`include/display.h`) | `dg-gui.c`, `dg-c4ix.c` |
+| C4IX, the whole display | `doom`, or Go > Games > Doom; the desktop gives way until it ends (`include/display.h`) | `dg-gui.c`, `dg-c4ix.c` |
 | C4IX, a window | `doom -window` in a Terminal, whose window it plays in; also when a program that does not give way has the display. Several at once, each with `pin` on a CPU of its own (docs/c4ix-smp.md) | `dg-gui.c`, `dg-c4ix.c` |
-| C4DOS | `DOOM` at the `A>` prompt; the page's `?system=c4dos` | `dg-gui.c`, `dg-bare.c` |
+| C4DOS | `DOOM` at the `A:\>` prompt; the page's `?system=c4dos` | `dg-gui.c`, `dg-bare.c` |
 | a grin window, under C4DOS | Program Manager's Games > Doom, or `DOOM.C4R` in File Manager or a DOS Prompt, in grin (`?system=c4dos` boots into it) | `dg-gui.c`, `dg-bare.c`, through grin's table (below) |
 | the bare machine | `doom.c4r` as the machine's image; the page's `?system=doom` | `dg-gui.c`, `dg-bare.c` |
 
@@ -39,7 +39,7 @@ runs grin's loop once, so grin's applications (a Clock, Notepad) carry on
 while the game plays; the window is 1x (320x200) or 2x (640x400), from its
 Size menu; keys reach the game only while its window has the focus; and
 closing the window ends the game, as quitting it would. Without grin -- at
-`A>`, full screen from grin, or on the bare machine -- nothing changes.
+`A:\>`, full screen from grin, or on the bare machine -- nothing changes.
 
 ## Your own IWAD: `doom -home`
 
@@ -119,7 +119,7 @@ keeps the AdLib whatever the card has.
 | doomgeneric's units and headers | the game, with the changes below |
 | `dg-sum.c` | what every platform shares: each frame to the platform, 8-bit with its palette; a `-timedemo`'s frames checksummed, on a virtual clock |
 | `dg-gui.c` | the platform on libjs's display: `GUI_BLIT8` scaled by the host to 640x480, keys as Doom's key codes, the machine's clock |
-| `dg-snd.c` | the sound card: effects on its eight sample channels, and music, MUS played by Chocolate Doom's OPL player on its OPL, or as General MIDI on its MIDI port |
+| `dg-snd.c` | the sound card: effects on eight of its sixteen sample channels, Doom's eight, and music, MUS played by Chocolate Doom's OPL player on its OPL, or as General MIDI on its MIDI port |
 | `dg-c4ix.c`, `dg-bare.c` | whether the display has to be asked for: on C4IX the desktop has it, under grin grin does; and the window instead (C4IX's, or grin's) |
 | `dg-host.c` | the platform on a host, built with gcc: no display and no sound, the reference for `make test-doom` |
 | `c4inc/` | `stdint.h`, `stdbool.h` and `inttypes.h`, which C4IX's libc lacks |
