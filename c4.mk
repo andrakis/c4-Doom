@@ -15,14 +15,14 @@ DOOM_HDRS  := $(wildcard $(DOOM)/*.h $(DOOM)/c4inc/*.h) \
               $(wildcard src/c4ix/libc/include/*.h src/c4ix/libc/include/sys/*.h) \
               src/c4ix/include/display.h libjs/guest/gui.h libjs/guest/gui.c \
               libjs/guest/snd.h libjs/guest/snd.c
-DOOM_CC    := ./c4sp32 -c 400000 src/c4sp/lisp/c4lc.lisp -O $(IMG_G) -mfuse -fno-builtin -c -conforming \
+DOOM_CC    := $(call lc32,-c 400000) -O $(IMG_G) -mfuse -fno-builtin -c -conforming \
               -D C4DOOM -D FEATURE_SOUND -I $(DOOM)/c4inc -I src/c4ix/libc/include \
               -I src/c4ix/include -I libjs/guest -I $(DOOM)
 doom-objs: $(DOOM_UNITS:%=.doom/%.c4o) .doom/plat/dg-c4ix.c4o .doom/plat/dg-bare.c4o
-.doom/%.c4o: $(DOOM)/%.c $(DOOM_HDRS) $(C4LC_LISP) .img_g | c4sp32
+.doom/%.c4o: $(DOOM)/%.c $(DOOM_HDRS) $(C4LC_LISP) .img_g | $(LC32_BIN)
 	@mkdir -p .doom/plat
 	$(DOOM_CC) $< $@ > /dev/null
-.doom/plat/%.c4o: $(DOOM)/%.c $(DOOM_HDRS) $(C4LC_LISP) .img_g | c4sp32
+.doom/plat/%.c4o: $(DOOM)/%.c $(DOOM_HDRS) $(C4LC_LISP) .img_g | $(LC32_BIN)
 	@mkdir -p .doom/plat
 	$(DOOM_CC) $< $@ > /dev/null
 PHONY += doom-objs
