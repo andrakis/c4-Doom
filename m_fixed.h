@@ -34,6 +34,16 @@ typedef int fixed_t;
 fixed_t FixedMul	(fixed_t a, fixed_t b);
 fixed_t FixedDiv	(fixed_t a, fixed_t b);
 
+#if defined(C4DOOM) && defined(__c4_inttypes__)
+// c4doom: FixedMul is some 2,000 calls a frame, each about fifty
+// instructions with the call; where the machine has Doom's accelerators
+// (c4/c4accel.h) it is one, chosen where it stands. m_fixed.c's function,
+// c4_FixedMul, is there for every other machine and until the game asks.
+#include "c4/c4accel.h"
+fixed_t c4_FixedMul(fixed_t a, fixed_t b);
+#define FixedMul(a, b) (DOOM_ACCEL() ? doom_fixmul((a), (b)) : c4_FixedMul((a), (b)))
+#endif
+
 
 
 #endif

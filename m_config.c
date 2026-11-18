@@ -161,6 +161,13 @@ static default_t	doom_defaults_list[] =
     CONFIG_VARIABLE_INT(show_messages),
 
     //!
+    // c4doom: if non-zero, the browser's accelerators draw, where the
+    // machine has them (the Options menu's ACCELERATED, c4/c4accel.h).
+    //
+
+    CONFIG_VARIABLE_INT(c4_accelerated),
+
+    //!
     // Keyboard key to turn right.
     //
 

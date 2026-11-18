@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include "doomgeneric.h"
 #include "m_argv.h"
+#include "c4/c4accel.h"
 
 int dg_pal[256];                        // 0x00RRGGBB, I_SetPalette's
 static int dg_timing;                   // -timedemo: checksum the frames
@@ -61,10 +62,16 @@ void dg_frame(unsigned char *pixels) {
     if (dg_timing) {
         if (!dg_frames) t0 = plat_ms();
         s = dg_sum;
-        for (i = 0; i < 256; i++) s = s * 31 + (uint32_t)dg_pal[i];
-        // every pixel, four at a time: a word each, the way they lie
-        for (i = 0; i < 320 * 200; i += 4)
-            s = s * 31 + (uint32_t)(pixels[i] | (pixels[i + 1] << 8) | (pixels[i + 2] << 16) | ((uint32_t)pixels[i + 3] << 24));
+        // in one instruction where the machine has Doom's accelerators
+        // (c4/c4accel.h), the same sum
+        if (DOOM_ACCEL())
+            s = (uint32_t)doom_sum(s, dg_pal, pixels);
+        else {
+            for (i = 0; i < 256; i++) s = s * 31 + (uint32_t)dg_pal[i];
+            // every pixel, four at a time: a word each, the way they lie
+            for (i = 0; i < 320 * 200; i += 4)
+                s = s * 31 + (uint32_t)(pixels[i] | (pixels[i + 1] << 8) | (pixels[i + 2] << 16) | ((uint32_t)pixels[i + 3] << 24));
+        }
         dg_sum = s;
         dg_frames++;
     }

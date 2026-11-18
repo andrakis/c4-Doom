@@ -37,6 +37,7 @@
 #include "z_zone.h"
 
 #include "config.h"
+#include "c4/c4accel.h"
 #ifdef HAVE_LIBPNG
 #include <png.h>
 #endif
@@ -173,6 +174,16 @@ void V_DrawPatch(int x, int y, patch_t *patch)
 
     w = SHORT(patch->width);
 
+#ifdef C4DOOM
+    // c4doom: the columns in one instruction, where the machine has Doom's
+    // accelerators (c4/c4accel.h)
+    if (DOOM_ACCEL())
+    {
+        doom_patch(patch, desttop, SCREENWIDTH, w, 0);
+        return;
+    }
+#endif
+
     for ( ; col<w ; x++, col++, desttop++)
     {
         column = (column_t *)((byte *)patch + LONG(patch->columnofs[col]));
@@ -236,6 +247,16 @@ void V_DrawPatchFlipped(int x, int y, patch_t *patch)
     desttop = dest_screen + y * SCREENWIDTH + x;
 
     w = SHORT(patch->width);
+
+#ifdef C4DOOM
+    // c4doom: the columns in one instruction, where the machine has Doom's
+    // accelerators (c4/c4accel.h)
+    if (DOOM_ACCEL())
+    {
+        doom_patch(patch, desttop, SCREENWIDTH, w, 1);
+        return;
+    }
+#endif
 
     for ( ; col<w ; x++, col++, desttop++)
     {

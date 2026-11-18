@@ -36,6 +36,19 @@
 // State.
 #include "doomstat.h"
 
+#ifdef C4DOOM
+// c4doom: Doom's accelerators (c4/accel.mjs, c4/c4accel.h). doom_accel is
+// the first of Doom's numbers, or 0: the game's to draw them. -1 until
+// asked, which the first column or FixedMul does; the config (d_main.c's
+// c4_accelerated) and the Options menu's ACCELERATED (m_menu.c) set it.
+#include "c4/c4accel.h"
+int doom_accel = -1;
+int doom_accel_on = 1;
+int doom_accel_base(void) { return doom_accel = doom_accel_on ? accel_find("doom") : 0; }
+int doom_accel_avail(void) { return accel_find("doom") != 0; }
+void doom_accel_set(int on) { doom_accel_on = on != 0; doom_accel = doom_accel_on ? accel_find("doom") : 0; }
+#endif
+
 
 // ?
 #define MAXWIDTH			1120
@@ -128,6 +141,14 @@ void R_DrawColumn (void)
     //  which is the only mapping to be done.
     fracstep = dc_iscale; 
     frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_col(count + 1, frac, fracstep, 127, dc_source, dc_colormap, 0, dest, SCREENWIDTH, 0);
+	return;
+    }
+#endif
 
     // Inner loop that does the actual texture mapping,
     //  e.g. a DDA-lile scaling.
@@ -239,6 +260,14 @@ void R_DrawColumnLow (void)
     fracstep = dc_iscale; 
     frac = dc_texturemid + (dc_yl-centery)*fracstep;
     
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_col(count + 1, frac, fracstep, 127, dc_source, dc_colormap, 0, dest, SCREENWIDTH, dest2 - dest);
+	return;
+    }
+#endif
+
     do 
     {
 	// Hack. Does not work corretly.
@@ -316,6 +345,14 @@ void R_DrawFuzzColumn (void)
     fracstep = dc_iscale; 
     frac = dc_texturemid + (dc_yl-centery)*fracstep; 
 
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_fuzz(count + 1, dest, SCREENWIDTH, colormaps + 6*256, fuzzoffset, &fuzzpos, FUZZTABLE, 0);
+	return;
+    }
+#endif
+
     // Looks like an attempt at dithering,
     //  using the colormap #6 (of 0-31, a bit
     //  brighter than average).
@@ -381,6 +418,14 @@ void R_DrawFuzzColumnLow (void)
     // Looks familiar.
     fracstep = dc_iscale; 
     frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_fuzz(count + 1, dest, SCREENWIDTH, colormaps + 6*256, fuzzoffset, &fuzzpos, FUZZTABLE, dest2 - dest);
+	return;
+    }
+#endif
 
     // Looks like an attempt at dithering,
     //  using the colormap #6 (of 0-31, a bit
@@ -450,6 +495,14 @@ void R_DrawTranslatedColumn (void)
     fracstep = dc_iscale; 
     frac = dc_texturemid + (dc_yl-centery)*fracstep; 
 
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_col(count + 1, frac, fracstep, -1, dc_source, dc_colormap, dc_translation, dest, SCREENWIDTH, 0);
+	return;
+    }
+#endif
+
     // Here we do an additional index re-mapping.
     do 
     {
@@ -499,6 +552,14 @@ void R_DrawTranslatedColumnLow (void)
     // Looks familiar.
     fracstep = dc_iscale; 
     frac = dc_texturemid + (dc_yl-centery)*fracstep; 
+
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_col(count + 1, frac, fracstep, -1, dc_source, dc_colormap, dc_translation, dest, SCREENWIDTH, dest2 - dest);
+	return;
+    }
+#endif
 
     // Here we do an additional index re-mapping.
     do 
@@ -621,6 +682,14 @@ void R_DrawSpan (void)
 
     // We do not check for zero spans here?
     count = ds_x2 - ds_x1;
+
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_span(count + 1, position, step, ds_source, ds_colormap, dest, 0);
+	return;
+    }
+#endif
 
     do
     {
@@ -748,6 +817,14 @@ void R_DrawSpanLow (void)
     ds_x2 <<= 1;
 
     dest = ylookup[ds_y] + columnofs[ds_x1];
+
+#ifdef C4DOOM
+    if (DOOM_ACCEL())
+    {
+	doom_span(count + 1, position, step, ds_source, ds_colormap, dest, 1);
+	return;
+    }
+#endif
 
     do
     {

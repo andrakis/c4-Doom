@@ -123,6 +123,8 @@ keeps the AdLib whatever the card has.
 | `dg-c4ix.c`, `dg-bare.c` | whether the display has to be asked for: on C4IX the desktop has it, under grin grin does; and the window instead (C4IX's, or grin's) |
 | `dg-host.c` | the platform on a host, built with gcc: no display and no sound, the reference for `make test-doom` |
 | `c4inc/` | `stdint.h`, `stdbool.h` and `inttypes.h`, which C4IX's libc lacks |
+| `c4/accel.mjs`, `c4/c4accel.h` | the browser's accelerators: the drawing loops in the game's own JavaScript, run by c4's libjs (docs/accel.md in c4) |
+| `c4/acceltest.c` | each accelerator against the loop it stands for; `make test-doom` runs it first |
 
 ## The changes to doomgeneric
 
@@ -155,6 +157,15 @@ Everything else is doomgeneric's own code.
   pairs. demo3's timedemo on the bare machine went from 68 s to 37 s, of
   which the checksum itself is about a quarter. What is left is mostly
   `R_DrawColumn`'s inner loop.
+- **The browser's accelerators** (`c4/accel.mjs`, docs/accel.md in c4).
+  Where the machine has them (c4's libjs: the page, `cli.js`), the
+  columns, the shadow, the floors' rows, the patches, the timedemo's
+  checksum, `FixedMul` and `FixedDiv` are each one instruction, run by the
+  host with exactly the C's results: a timedemo's frame is a fifth of the
+  instructions it was, with the same checksums. Options has ACCELERATED to
+  turn them off (`c4_accelerated` in the config), a ninth line in the
+  small font; the menu sits 8 pixels higher for it (`m_menu.c`).
+  Everywhere else, and in gcc's build, the C draws as before.
 
 ## How fast
 

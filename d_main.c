@@ -73,6 +73,7 @@
 #include "statdump.h"
 
 #include "d_main.h"
+#include "c4/c4accel.h"
 
 //
 // D-DoomLoop()
@@ -361,6 +362,7 @@ void D_BindVariables(void)
     M_BindVariable("sfx_volume",             &sfxVolume);
     M_BindVariable("music_volume",           &musicVolume);
     M_BindVariable("show_messages",          &showMessages);
+    M_BindVariable("c4_accelerated",         &doom_accel_on);
     M_BindVariable("screenblocks",           &screenblocks);
     M_BindVariable("detaillevel",            &detailLevel);
     M_BindVariable("snd_channels",           &snd_channels);
@@ -1367,6 +1369,7 @@ void D_DoomMain (void)
     M_SetConfigFilenames("default.cfg", PROGRAM_PREFIX "doom.cfg");
     D_BindVariables();
     M_LoadDefaults();
+    doom_accel = -1;    // c4doom: asked again, as the config has it
 
     // Save configuration at exit.
     I_AtExit(M_SaveDefaults, false);

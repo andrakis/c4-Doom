@@ -57,6 +57,7 @@
 #include "sounds.h"
 
 #include "m_menu.h"
+#include "c4/c4accel.h"
 
 
 extern patch_t*		hu_font[HU_FONTSIZE];
@@ -189,6 +190,7 @@ void M_ChangeSensitivity(int choice);
 void M_SfxVol(int choice);
 void M_MusicVol(int choice);
 void M_ChangeDetail(int choice);
+void M_ChangeAccel(int choice);
 void M_SizeDisplay(int choice);
 void M_StartGame(int choice);
 void M_Sound(int choice);
@@ -338,6 +340,7 @@ enum
     mousesens,
     option_empty2,
     soundvol,
+    accelerated,        // c4doom: the browser's accelerators
     opt_end
 } options_e;
 
@@ -350,7 +353,8 @@ menuitem_t OptionsMenu[]=
     {-1,"",0,'\0'},
     {2,"M_MSENS",	M_ChangeSensitivity,'m'},
     {-1,"",0,'\0'},
-    {1,"M_SVOL",	M_Sound,'s'}
+    {1,"M_SVOL",	M_Sound,'s'},
+    {1,"",		M_ChangeAccel,'a'}
 };
 
 menu_t  OptionsDef =
@@ -359,7 +363,9 @@ menu_t  OptionsDef =
     &MainDef,
     OptionsMenu,
     M_DrawOptions,
-    60,37,
+    // c4doom: 8 pixels up, as is the title, so that ACCELERATED, a ninth
+    // line, stays above the status bar
+    60,37-8,
     0
 };
 
@@ -986,7 +992,7 @@ static char *msgNames[2] = {"M_MSGOFF","M_MSGON"};
 
 void M_DrawOptions(void)
 {
-    V_DrawPatchDirect(108, 15, W_CacheLumpName(DEH_String("M_OPTTTL"),
+    V_DrawPatchDirect(108, 15-8, W_CacheLumpName(DEH_String("M_OPTTTL"),
                                                PU_CACHE));
 	
     V_DrawPatchDirect(OptionsDef.x + 175, OptionsDef.y + LINEHEIGHT * detail,
@@ -1002,6 +1008,11 @@ void M_DrawOptions(void)
 
     M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
 		 9,screenSize);
+
+    // c4doom: in the small font, as the WAD has no patch for it
+    M_WriteText(OptionsDef.x, OptionsDef.y + LINEHEIGHT * accelerated + 4, "ACCELERATED");
+    M_WriteText(OptionsDef.x + 120, OptionsDef.y + LINEHEIGHT * accelerated + 4,
+                !doom_accel_avail() ? "NOT ON THIS MACHINE" : doom_accel_on ? "ON" : "OFF");
 }
 
 void M_Options(int choice)
@@ -1209,6 +1220,21 @@ void M_ChangeDetail(int choice)
 
 
 
+
+//
+// M_ChangeAccel: c4doom's ACCELERATED, the browser's accelerators on or off
+// (c4/c4accel.h), kept in the config as c4_accelerated
+//
+void M_ChangeAccel(int choice)
+{
+    if (!doom_accel_avail())
+    {
+	players[consoleplayer].message = "NO ACCELERATORS ON THIS MACHINE";
+	return;
+    }
+    doom_accel_set(!doom_accel_on);
+    players[consoleplayer].message = doom_accel_on ? "ACCELERATED: ON" : "ACCELERATED: OFF";
+}
 
 void M_SizeDisplay(int choice)
 {

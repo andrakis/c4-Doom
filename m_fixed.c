@@ -24,6 +24,13 @@
 #include "i_system.h"
 
 #include "m_fixed.h"
+#include "c4/c4accel.h"
+
+#ifdef FixedMul
+// c4doom: the function behind m_fixed.h's macro
+#undef FixedMul
+#define FixedMul c4_FixedMul
+#endif
 
 
 
@@ -59,6 +66,12 @@ FixedMul
 
 fixed_t FixedDiv(fixed_t a, fixed_t b)
 {
+#ifdef C4DOOM
+    // c4doom: one instruction where the machine has Doom's accelerators
+    // (c4/c4accel.h), the same quotient; b 0 is the C's, as it was
+    if (b != 0 && DOOM_ACCEL())
+	return doom_fixdiv(a, b);
+#endif
     if ((abs(a) >> 14) >= abs(b))
     {
 	return (a^b) < 0 ? INT_MIN : INT_MAX;
