@@ -1291,6 +1291,17 @@ static void I_OPL_ShutdownMusic(void)
         // Stop currently-playing track, if there is one:
 
         I_OPL_StopSong();
+
+        // c4: the card is the machine's, and its OPL3 mode outlives us.
+        // Left on, it silences whatever plays the OPL next as an OPL2
+        // (ROTT, Duke3D, grin's chime): in that mode a channel sounds only
+        // with its 0xC0 left/right bits, which an OPL2 program never sets.
+        // So take it back off, as a DOS game left an SB16 for the next.
+        if (opl_opl3mode)
+        {
+            opl_write(0x104, 0x00);             // no four-operator channels
+            opl_write(OPL_REG_NEW, 0x00);
+        }
     }
 }
 
