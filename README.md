@@ -68,7 +68,8 @@ those that are.
 | | its folder | then |
 |---|---|---|
 | C4IX (it has a `/home`) | `/home/doom/` | `/home/` |
-| the bare machine, C4DOS | `doom/` at drive 0's root (`A:\DOOM`) | drive 0's root |
+| the bare machine | `doom/` at drive 0's root | drive 0's root |
+| C4DOS (the page's, whose uploads are on B:, its home drive) | `doom/` in the home drive's current directory: `B:\DOOM` | `B:\` |
 
 On C4IX those are RAM files of the host's, which seek, read a part at a
 time; on the bare machine the IWAD is read whole into memory when it
