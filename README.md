@@ -16,7 +16,8 @@ how Wolfenstein 3D, the port before it, was done; this one follows it.
 | C4IX, the whole display | `doom`, or Go > Games > Doom; the desktop gives way until it ends (`include/display.h`) | `dg-gui.c`, `dg-c4ix.c` |
 | C4IX, a window | `doom -window` in a Terminal, whose window it plays in; also when a program that does not give way has the display. Several at once, each with `pin` on a CPU of its own (docs/c4ix-smp.md) | `dg-gui.c`, `dg-c4ix.c` |
 | C4DOS | `DOOM` at the `A:\>` prompt; the page's `?system=c4dos` | `dg-gui.c`, `dg-bare.c` |
-| a grin window, under C4DOS | Program Manager's Games > Doom, or `DOOM.C4R` in File Manager or a DOS Prompt, in grin (`?system=c4dos` boots into it) | `dg-gui.c`, `dg-bare.c`, through grin's table (below) |
+| grin, under C4DOS | Program Manager's Action Games > Doom, full screen; `DOOM` in File Manager or a DOS Prompt plays as that item says (`?system=c4dos` boots into grin) | `dg-gui.c`, `dg-bare.c` |
+| a grin window, under C4DOS | an item of Program Manager's whose Properties say "DOS program, in a window" | `dg-gui.c`, `dg-bare.c`, through grin's table (below) |
 | the bare machine | `doom.c4r` as the machine's image; the page's `?system=doom` | `dg-gui.c`, `dg-bare.c` |
 
 On C4IX the game asks for a nice of -5 (docs/c4ix-design.md 4.4): served
@@ -57,6 +58,9 @@ plays too), then start it. `-iwad NAME` picks one of several:
 | Doom II | ... > Doom II, or `-iwad doom2.wad` | `?system=doom2-full` |
 | Final Doom: TNT | ... > Final Doom: TNT Evilution, or `-iwad tnt.wad` | `?system=tnt-full` |
 | Final Doom: Plutonia | ... > Final Doom: The Plutonia Experiment, or `-iwad plutonia.wad` | `?system=plutonia-full` |
+
+Under C4DOS, grin's Program Manager has them in Full Games (Uploads):
+The Ultimate Doom, Doom II, TNT: Evilution and The Plutonia Experiment.
 
 `D_FindIWAD` (`d_iwad.c`) looks in Doom's folder first, then in `/home`,
 for the name `-iwad` gives (as given, in lower case or in upper case);
@@ -176,7 +180,9 @@ rather than playing slowly. On the machine this was measured on (libjs at
 about 60M instructions a second in a background tab), E1M1 played at
 about 13 frames a second on the bare machine, and slower inside C4IX with
 the desktop and top behind it. Doom on the original hardware ran at up to
-35.
+35. That was before the browser's accelerators. With them, a timedemo's
+median frame on node's bare machine is 0.70 to 0.78 M instructions, where
+it was 3.76 to 3.94 M (c4's docs/accel.md, 4.5).
 
 ## Building and testing
 
